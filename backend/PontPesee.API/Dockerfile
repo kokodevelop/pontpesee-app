@@ -6,9 +6,11 @@ WORKDIR /src
 COPY ["PontPesee.API.csproj", "./"]
 RUN dotnet restore "PontPesee.API.csproj"
 
-# Copy everything else and build
+# Copy everything else (excluding files in .dockerignore)
 COPY . .
-RUN dotnet build "PontPesee.API.csproj" -c Release -o /app/build
+
+# Build directly to publish (skip separate build step)
+# This avoids potential build errors
 
 # Stage 2: Publish
 FROM build AS publish
