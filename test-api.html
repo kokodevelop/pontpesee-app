@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Pont Pesée</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        .success { background: #27ae60; }
+        .success:hover { background: #229954; }
+        .danger { background: #e74c3c; }
+        .danger:hover { background: #c0392b; }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .result {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .status.ok { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .token-display {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test API Pont Pesée</h1>
+
+    <div class="container">
+        <h2>Configuration</h2>
+        <label>URL de l'API:</label>
+        <input type="text" id="apiUrl" value="http://localhost:5000/api">
+    </div>
+
+    <div class="container">
+        <h2>1️⃣ Test de santé (sans authentification)</h2>
+        <button onclick="testPing()">Tester /api/Health/ping</button>
+        <div id="pingStatus"></div>
+        <div id="pingResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>2️⃣ Authentification</h2>
+        <label>Username:</label>
+        <input type="text" id="username" value="admin">
+        <label>Password:</label>
+        <input type="password" id="password" value="admin123">
+        <button class="success" onclick="login()">Se connecter</button>
+        <button class="danger" onclick="clearToken()">Effacer le token</button>
+        <div id="loginStatus"></div>
+        <div id="tokenDisplay" class="token-display" style="display:none;"></div>
+        <div id="loginResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>3️⃣ Test endpoint protégé (avec token)</h2>
+        <button onclick="testSecurePing()" id="securePingBtn" disabled>Tester /api/Health/secure-ping</button>
+        <div id="securePingStatus"></div>
+        <div id="securePingResult" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>4️⃣ Recherche de pesées</h2>
+        <label>Table:</label>
+        <select id="tableName">
+            <option value="pesee">pesee (GUTRI)</option>
+            <option value="peseep2">peseep2 (OLODIO)</option>
+        </select>
+        <label>Date début:</label>
+        <input type="date" id="dateDebut" value="2025-01-01">
+        <label>Date fin:</label>
+        <input type="date" id="dateFin" value="2025-01-10">
+        <button onclick="searchPesees()" id="searchBtn" disabled>Rechercher</button>
+        <div id="searchStatus"></div>
+        <div id="searchResult" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+
+        function updateTokenStatus() {
+            const securePingBtn = document.getElementById('securePingBtn');
+            const searchBtn = document.getElementById('searchBtn');
+            const tokenDisplay = document.getElementById('tokenDisplay');
+
+            if (token) {
+                securePingBtn.disabled = false;
+                searchBtn.disabled = false;
+                tokenDisplay.style.display = 'block';
+                tokenDisplay.innerHTML = `<strong>Token actif:</strong><br>${token.substring(0, 50)}...`;
+            } else {
+                securePingBtn.disabled = true;
+                searchBtn.disabled = true;
+                tokenDisplay.style.display = 'none';
+            }
+        }
+
+        async function testPing() {
+            const url = document.getElementById('apiUrl').value;
+            const statusEl = document.getElementById('pingStatus');
+            const resultEl = document.getElementById('pingResult');
+
+            statusEl.innerHTML = '<span class="status pending">Test en cours...</span>';
+            resultEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${url}/Health/ping`);
+                const data = await response.json();
+
+                statusEl.innerHTML = '<span class="status ok">✅ API accessible</span>';
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                resultEl.style.display = 'block';
+            } catch (error) {
+                statusEl.innerHTML = '<span class="status error">❌ Erreur de connexion</span>';
+                resultEl.textContent = error.message;
+                resultEl.style.display = 'block';
+            }
+        }
+
+        async function login() {
+            const url = document.getElementById('apiUrl').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusEl = document.getElementById('loginStatus');
+            const resultEl = document.getElementById('loginResult');
+
+            statusEl.innerHTML = '<span class="status pending">Connexion en cours...</span>';
+            resultEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${url}/Auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.token;
+                    localStorage.setItem('token', token);
+
+                    statusEl.innerHTML = '<span class="status ok">✅ Connexion réussie</span>';
+                    resultEl.textContent = JSON.stringify(data, null, 2);
+                    resultEl.style.display = 'block';
+                    updateTokenStatus();
+                } else {
+                    const error = await response.text();
+                    statusEl.innerHTML = '<span class="status error">❌ Échec de connexion</span>';
+                    resultEl.textContent = error;
+                    resultEl.style.display = 'block';
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<span class="status error">❌ Erreur de connexion</span>';
+                resultEl.textContent = error.message;
+                resultEl.style.display = 'block';
+            }
+        }
+
+        async function testSecurePing() {
+            const url = document.getElementById('apiUrl').value;
+            const statusEl = document.getElementById('securePingStatus');
+            const resultEl = document.getElementById('securePingResult');
+
+            statusEl.innerHTML = '<span class="status pending">Test en cours...</span>';
+            resultEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${url}/Health/secure-ping`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.innerHTML = '<span class="status ok">✅ Authentification réussie</span>';
+                    resultEl.textContent = JSON.stringify(data, null, 2);
+                    resultEl.style.display = 'block';
+                } else {
+                    statusEl.innerHTML = '<span class="status error">❌ Erreur 401 - Token invalide</span>';
+                    resultEl.textContent = await response.text();
+                    resultEl.style.display = 'block';
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<span class="status error">❌ Erreur</span>';
+                resultEl.textContent = error.message;
+                resultEl.style.display = 'block';
+            }
+        }
+
+        async function searchPesees() {
+            const url = document.getElementById('apiUrl').value;
+            const statusEl = document.getElementById('searchStatus');
+            const resultEl = document.getElementById('searchResult');
+
+            const filter = {
+                tableName: document.getElementById('tableName').value,
+                dateDebut: document.getElementById('dateDebut').value,
+                dateFin: document.getElementById('dateFin').value,
+                acceptes: true,
+                page: 1,
+                pageSize: 10
+            };
+
+            statusEl.innerHTML = '<span class="status pending">Recherche en cours...</span>';
+            resultEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${url}/Pesee/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(filter)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.innerHTML = `<span class="status ok">✅ ${data.nombrePesees} pesées trouvées</span>`;
+                    resultEl.textContent = JSON.stringify(data, null, 2);
+                    resultEl.style.display = 'block';
+                } else {
+                    statusEl.innerHTML = `<span class="status error">❌ Erreur ${response.status}</span>`;
+                    resultEl.textContent = await response.text();
+                    resultEl.style.display = 'block';
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<span class="status error">❌ Erreur</span>';
+                resultEl.textContent = error.message;
+                resultEl.style.display = 'block';
+            }
+        }
+
+        function clearToken() {
+            token = null;
+            localStorage.removeItem('token');
+            updateTokenStatus();
+            document.getElementById('loginStatus').innerHTML = '<span class="status ok">Token effacé</span>';
+        }
+
+        // Initialize
+        updateTokenStatus();
+    </script>
+</body>
+</html>

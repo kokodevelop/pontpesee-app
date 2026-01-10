@@ -1,0 +1,2 @@
+$p = Get-NetTCPConnection -LocalPort 5059 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1
+if ($p) { Write-Output "Stopping PID $p"; Stop-Process -Id $p -Force -ErrorAction SilentlyContinue } else { Write-Output "No process listening on 5059" }

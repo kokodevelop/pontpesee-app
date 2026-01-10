@@ -1,0 +1,18 @@
+{
+  "NombrePesees": 1,
+  "PoidsBrutTotal": 100.0,
+  "PoidsNetTotal": 90.0,
+  "Pesees": [
+    {
+      "NumTicket": "T001",
+      "Dmv": "2026-01-10T00:00:00",
+      "CodeSite": "S1",
+      "Immatriculation": "ABC123",
+      "IdFournisseur": "F1",
+      "NomClient": "Client1",
+      "Label": "ProduitX",
+      "Mouvement": "ENTREE",
+      "PoidsNet": 90.0
+    }
+  ]
+}

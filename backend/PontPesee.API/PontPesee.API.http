@@ -1,0 +1,6 @@
+@PontPesee.API_HostAddress = http://localhost:3000
+
+GET {{PontPesee.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

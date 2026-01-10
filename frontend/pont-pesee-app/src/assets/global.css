@@ -1,0 +1,42 @@
+/* Reset et styles globaux */
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Roboto', sans-serif;
+  overflow-x: hidden;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+/* Forcer Vuetify à prendre toute la hauteur */
+.v-application {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.v-application__wrap {
+  min-height: 100vh !important;
+  height: 100% !important;
+}
+
+/* Style spécifique pour la page de login */
+.login-page .v-main {
+  min-height: 100vh !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Avoid forcing fixed positioning (it can interfere with other layouts). */
+/* The login page will be handled via a route-aware class on `#app`. */

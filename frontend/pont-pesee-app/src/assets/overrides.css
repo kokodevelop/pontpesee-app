@@ -1,0 +1,40 @@
+/* Temporary global overrides to guard against accidental vertical text or transforms
+   affecting cards and auth content. Scoped to the Vuetify application root. */
+
+.v-application .v-card,
+.v-application .menu-card,
+.v-application .v-card * {
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+  text-orientation: mixed !important;
+  white-space: normal !important;
+}
+
+/* Ensure v-main used for auth is not clipped by parent grid */
+.v-application .auth-main {
+  grid-column: 1 / -1 !important;
+}
+
+/* Stronger global override: when body has auth-route, disable the
+   two-column grid on #app (this targets the grid at its source). */
+body.auth-route #app {
+  display: block !important;
+  grid-template-columns: none !important;
+  max-width: 100% !important;
+  padding: 0 1rem !important;
+}
+
+/* Strong global fallback: if any grid rules still apply and clip content,
+   force #app and the Vuetify wrapper to be full-width and not use grid. */
+body #app {
+  display: block !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 2rem !important;
+  grid-template-columns: none !important;
+}
+
+body .v-application__wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+}

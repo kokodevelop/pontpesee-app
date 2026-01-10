@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Direct API - Pont Pesée</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .success:hover {
+            background: #229954;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 5px;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .token-display {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #856404;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Direct API - Pont Pesée</h1>
+
+    <div class="info">
+        <strong>📌 Instructions:</strong>
+        <ol>
+            <li>Entrez votre username et password</li>
+            <li>Cliquez sur "1. LOGIN" pour obtenir un token</li>
+            <li>Le token sera automatiquement sauvegardé</li>
+            <li>Cliquez sur "2. TEST SEARCH" pour tester l'endpoint protégé</li>
+        </ol>
+    </div>
+
+    <!-- ÉTAPE 1: LOGIN -->
+    <div class="container">
+        <h2>🔐 Étape 1: Login</h2>
+        <div>
+            <input type="text" id="username" placeholder="Username (ex: admin)" value="admin">
+            <input type="password" id="password" placeholder="Password" value="0101">
+        </div>
+        <button onclick="testLogin()">1. LOGIN</button>
+        <div id="login-result"></div>
+        <div id="token-display"></div>
+    </div>
+
+    <!-- ÉTAPE 2: TEST SEARCH -->
+    <div class="container">
+        <h2>🔍 Étape 2: Test Endpoint Protégé</h2>
+        <div class="warning">
+            ⚠️ Vous devez d'abord faire le LOGIN (Étape 1) avant de tester cette étape!
+        </div>
+        <button class="success" onclick="testSearch()" id="searchBtn" disabled>2. TEST SEARCH</button>
+        <div id="search-result"></div>
+    </div>
+
+    <!-- ÉTAPE 3: LOGS DÉTAILLÉS -->
+    <div class="container">
+        <h2>📊 Logs Détaillés</h2>
+        <button onclick="clearLogs()">Effacer les logs</button>
+        <pre id="logs">En attente de tests...</pre>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5059/api';
+        let authToken = null;
+
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            logsDiv.textContent += `\n[${timestamp}] ${icon} ${message}`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').textContent = 'Logs effacés. En attente de nouveaux tests...\n';
+        }
+
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('login-result');
+            const tokenDiv = document.getElementById('token-display');
+
+            if (!username || !password) {
+                resultDiv.innerHTML = '<span class="status status-error">Erreur: Username et password requis!</span>';
+                log('LOGIN FAILED: Username et password requis', 'error');
+                return;
+            }
+
+            log(`Tentative de login avec username: ${username}`);
+            resultDiv.innerHTML = '<span class="status" style="background:#ffc107;">⏳ Connexion en cours...</span>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/Auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                log(`LOGIN Response Status: ${response.status}`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `<span class="status status-error">Erreur ${response.status}</span><pre>${errorText}</pre>`;
+                    log(`LOGIN FAILED: ${response.status} - ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                log(`LOGIN SUCCESS: Token reçu`, 'success');
+                log(`Token: ${data.token.substring(0, 50)}...`);
+                log(`Username: ${data.username}`);
+                log(`Profil: ${data.profil}`);
+                log(`Expire à: ${data.expiresAt}`);
+
+                authToken = data.token;
+                localStorage.setItem('authToken', authToken);
+
+                resultDiv.innerHTML = `
+                    <span class="status status-success">✅ Login réussi!</span>
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Profil:</strong> ${data.profil}</p>
+                    <p><strong>Expire à:</strong> ${data.expiresAt}</p>
+                `;
+
+                tokenDiv.innerHTML = `
+                    <strong>🔑 Token JWT généré:</strong>
+                    <div class="token-display">${data.token}</div>
+                    <p style="color: green; font-weight: bold;">✅ Token sauvegardé! Vous pouvez maintenant tester l'étape 2.</p>
+                `;
+
+                document.getElementById('searchBtn').disabled = false;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status status-error">Erreur réseau: ${error.message}</span>`;
+                log(`LOGIN ERROR: ${error.message}`, 'error');
+                console.error('Login error:', error);
+            }
+        }
+
+        async function testSearch() {
+            const resultDiv = document.getElementById('search-result');
+
+            // Récupérer le token depuis localStorage
+            authToken = localStorage.getItem('authToken');
+
+            if (!authToken) {
+                resultDiv.innerHTML = '<span class="status status-error">Erreur: Aucun token! Faites d\'abord le LOGIN (Étape 1)</span>';
+                log('SEARCH FAILED: Aucun token disponible', 'error');
+                return;
+            }
+
+            log('Tentative de recherche de pesées...');
+            log(`Token utilisé: ${authToken.substring(0, 50)}...`);
+            resultDiv.innerHTML = '<span class="status" style="background:#ffc107;">⏳ Recherche en cours...</span>';
+
+            try {
+                const requestBody = {
+                    tableName: "pesee",
+                    dateDebut: "2020-01-01T00:00:00",
+                    dateFin: "2030-12-31T23:59:59",
+                    tous: true,
+                    page: 0,
+                    pageSize: 10
+                };
+
+                log(`Request Body: ${JSON.stringify(requestBody)}`);
+                log(`Authorization Header: Bearer ${authToken.substring(0, 30)}...`);
+
+                const response = await fetch(`${API_BASE_URL}/Pesee/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                log(`SEARCH Response Status: ${response.status}`);
+                log(`Response Headers: ${JSON.stringify([...response.headers.entries()])}`);
+
+                if (response.status === 401) {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="status status-error">❌ Erreur 401 Unauthorized</span>
+                        <div class="warning">
+                            <p><strong>Le token a été rejeté par le serveur!</strong></p>
+                            <p>Vérifiez dans les logs PowerShell du backend pour voir le message d'erreur exact.</p>
+                            <p>Essayez de refaire le LOGIN pour obtenir un nouveau token.</p>
+                        </div>
+                        <pre>${errorText}</pre>
+                    `;
+                    log(`SEARCH FAILED: 401 Unauthorized - ${errorText}`, 'error');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `<span class="status status-error">Erreur ${response.status}</span><pre>${errorText}</pre>`;
+                    log(`SEARCH FAILED: ${response.status} - ${errorText}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                log(`SEARCH SUCCESS: ${data.nombrePesees} pesées trouvées`, 'success');
+                log(`Poids Brut Total: ${data.poidsBrutTotal}`);
+                log(`Poids Net Total: ${data.poidsNetTotal}`);
+
+                resultDiv.innerHTML = `
+                    <span class="status status-success">✅ Recherche réussie!</span>
+                    <h3>📊 Résultats:</h3>
+                    <p><strong>Nombre de pesées:</strong> ${data.nombrePesees}</p>
+                    <p><strong>Poids Brut Total:</strong> ${data.poidsBrutTotal} kg</p>
+                    <p><strong>Poids Net Total:</strong> ${data.poidsNetTotal} kg</p>
+                    <h3>📋 Données (${data.pesees.length} premières pesées):</h3>
+                    <pre>${JSON.stringify(data.pesees, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status status-error">Erreur réseau: ${error.message}</span>`;
+                log(`SEARCH ERROR: ${error.message}`, 'error');
+                console.error('Search error:', error);
+            }
+        }
+
+        // Vérifier si un token existe au chargement de la page
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            if (savedToken) {
+                authToken = savedToken;
+                document.getElementById('searchBtn').disabled = false;
+                document.getElementById('token-display').innerHTML = `
+                    <strong>🔑 Token JWT trouvé dans le cache:</strong>
+                    <div class="token-display">${savedToken}</div>
+                    <p style="color: green; font-weight: bold;">✅ Vous pouvez directement tester l'étape 2!</p>
+                `;
+                log('Token trouvé dans le cache localStorage', 'success');
+            } else {
+                log('Aucun token dans le cache. Veuillez faire le LOGIN d\'abord.');
+            }
+        };
+    </script>
+</body>
+</html>

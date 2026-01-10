@@ -1,0 +1,28 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:5059 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:5059...
+* Established connection to localhost (::1 port 5059) from ::1 port 13565 
+* using HTTP/1.x
+> POST /api/reports/statistics/pdf HTTP/1.1
+> Host: localhost:5059
+> User-Agent: curl/8.16.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 385
+> 
+} [385 bytes data]
+* upload completely sent off: 385 bytes
+100   385    0     0  100   385      0    315  0:00:01  0:00:01 --:--:--   315100   385    0     0  100   385      0    172  0:00:02  0:00:02 --:--:--   172100   385    0     0  100   385      0    119  0:00:03  0:00:03 --:--:--   119100   385    0     0  100   385      0     90  0:00:04  0:00:04 --:--:--    90100   385    0     0  100   385      0     73  0:00:05  0:00:05 --:--:--    73< HTTP/1.1 200 OK
+< Content-Length: 87489
+< Content-Type: application/pdf
+< Date: Sat, 10 Jan 2026 12:01:46 GMT
+< Server: Kestrel
+< Content-Disposition: attachment; filename=statistiques_20260110_120147.pdf; filename*=UTF-8''statistiques_20260110_120147.pdf
+< 
+{ [65026 bytes data]
+100 87874  100 87489  100   385  15541     68  0:00:05  0:00:05 --:--:-- 19843
+* Connection #0 to host localhost:5059 left intact

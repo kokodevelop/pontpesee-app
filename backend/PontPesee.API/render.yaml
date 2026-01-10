@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: pontpesee-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        value: Server=fga.sitsci.com;Port=3306;Database=gestpeseedb;User=pontuser;Password=Soprol@2022;connect timeout=300;SslMode=none;
+      - key: Jwt__Key
+        generateValue: true
+        # Ou définissez manuellement dans le dashboard Render
+      - key: Jwt__Issuer
+        value: PontPeseeAPI
+      - key: Jwt__Audience
+        value: PontPeseeClient
+      - key: Cors__AllowedOrigins__0
+        value: https://votre-app.vercel.app
+      - key: Cors__AllowedOrigins__1
+        value: https://fga.sitsci.com
+    healthCheckPath: /health
+    autoDeploy: true
