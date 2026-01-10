@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build:
+      context: ./PONT_WEBAPP/backend/PontPesee.API
+      dockerfile: Dockerfile
+    container_name: pontpesee-api
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=fga.sitsci.com;Port=3306;Database=gestpeseedb;User=pontuser;Password=Soprol@2022;connect timeout=300;SslMode=none;
+      - Jwt__Key=${JWT_SECRET_KEY:-VotreCleSecretePourJWT_MinimumTrenteDeuxCaracteres2025}
+      - Jwt__Issuer=PontPeseeAPI
+      - Jwt__Audience=PontPeseeClient
+      - Cors__AllowedOrigins__0=${FRONTEND_URL:-http://localhost:3000}
+      - Cors__AllowedOrigins__1=https://fga.sitsci.com
+    volumes:
+      - ./data/logs:/app/logs
+      - ./data/generated:/app/generated
+    networks:
+      - pontpesee-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (Vue.js)
+  frontend:
+    build:
+      context: ./PONT_WEBAPP/frontend/pont-pesee-app
+      dockerfile: Dockerfile
+    container_name: pontpesee-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - VITE_API_BASE_URL=${API_URL:-http://localhost:5000}
+    depends_on:
+      - api
+    networks:
+      - pontpesee-network
+
+  # Nginx Reverse Proxy (optionnel)
+  nginx:
+    image: nginx:alpine
+    container_name: pontpesee-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - pontpesee-network
+
+networks:
+  pontpesee-network:
+    driver: bridge
+
+volumes:
+  logs:
+  generated:
