@@ -132,7 +132,7 @@ Remplacez les valeurs suivantes :
 
 **Exemple pour connexion distante :**
 ```json
-"DefaultConnection": "Server=54.36.224.114;Port=3306;Database=gestpeseedb;User=pontuser;Password=Soprol@2022;SslMode=none;"
+"DefaultConnection": "Server=00.00.00.00;Port=3306;Database=db;User=user;Password=fgdfgg;SslMode=none;"
 ```
 
 ### Frontend - Variables d'environnement
