@@ -44,6 +44,13 @@
           value="reedition"
           @click="navigateTo('reedition')"
         ></v-list-item>
+
+        <v-list-item
+          prepend-icon="mdi-chart-areaspline"
+          title="Rapports Avancés"
+          value="reports"
+          @click="navigateTo('reports')"
+        ></v-list-item>
       </v-list>
     </v-navigation-drawer>
 

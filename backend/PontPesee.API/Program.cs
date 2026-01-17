@@ -120,6 +120,7 @@ builder.Services.AddCors(options =>
 // Enregistrement des services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPeseeService, PeseeService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 // Background report queue
 builder.Services.AddSingleton<IReportQueue, ReportQueue>();
 builder.Services.AddHostedService<ReportBackgroundService>();

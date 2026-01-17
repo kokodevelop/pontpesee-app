@@ -49,22 +49,22 @@
             </v-card>
           </v-col>
 
-          <!-- Card Export -->
+          <!-- Card Rapports Avances -->
           <v-col cols="12" md="6" lg="4">
             <v-card
               class="menu-card"
               hover
+              @click="navigateTo('reports')"
               elevation="4"
             >
               <v-card-text class="text-center pa-8">
                 <v-avatar size="80" color="orange" class="mb-4">
-                  <v-icon size="50" color="white">mdi-file-excel</v-icon>
+                  <v-icon size="50" color="white">mdi-chart-areaspline</v-icon>
                 </v-avatar>
-                <h2 class="text-h5 font-weight-bold mb-2">Export Excel</h2>
+                <h2 class="text-h5 font-weight-bold mb-2">Rapports Avances</h2>
                 <p class="text-body-2 text-grey-darken-1">
-                  Exporter les données vers Excel
+                  Graphiques par fournisseur, client, produit avec tendances
                 </p>
-                <v-chip size="small" color="warning" class="mt-2">Bientôt disponible</v-chip>
               </v-card-text>
             </v-card>
           </v-col>

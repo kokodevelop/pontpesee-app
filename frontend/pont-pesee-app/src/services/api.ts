@@ -109,6 +109,68 @@ export interface PeseeStatsResponse {
   currentPage: number
 }
 
+// Types pour les statistiques avancées
+export interface StatisticsFilter {
+  tableName?: string
+  dateDebut?: string
+  dateFin?: string
+  mouvement?: string
+  fournisseur?: string
+  client?: string
+  produit?: string
+  codeSite?: string
+  topN?: number
+}
+
+export interface EntityStat {
+  code: string
+  nom: string
+  nombrePesees: number
+  poidsBrutTotal: number
+  poidsNetTotal: number
+  poidsMoyen: number
+}
+
+export interface MouvementStat {
+  mouvement: string
+  nombrePesees: number
+  poidsBrutTotal: number
+  poidsNetTotal: number
+  pourcentage: number
+}
+
+export interface PeriodStat {
+  periode: string
+  dateDebut: string
+  dateFin: string
+  nombrePesees: number
+  poidsBrutTotal: number
+  poidsNetTotal: number
+}
+
+export interface StatisticsSummary {
+  totalPesees: number
+  totalPoidsBrut: number
+  totalPoidsNet: number
+  poidsMoyen: number
+  nombreFournisseurs: number
+  nombreClients: number
+  nombreProduits: number
+  nombreVehicules: number
+  premierePesee?: string
+  dernierePesee?: string
+}
+
+export interface AdvancedStatistics {
+  summary: StatisticsSummary
+  parFournisseur: EntityStat[]
+  parClient: EntityStat[]
+  parProduit: EntityStat[]
+  parMouvement: MouvementStat[]
+  parJour: PeriodStat[]
+  parMois: PeriodStat[]
+}
+
 // API Services
 export const authAPI = {
   login: (credentials: LoginRequest) =>
@@ -159,6 +221,27 @@ export const peseeAPI = {
 
   downloadReportJob: (jobId: string) =>
     apiClient.get(`/Reports/statistics/pdf/queue/${jobId}/download`, { responseType: 'blob' })
+}
+
+// API pour les statistiques avancées
+export const statisticsAPI = {
+  getAdvancedStatistics: (filter: StatisticsFilter) =>
+    apiClient.post<AdvancedStatistics>('/Statistics/advanced', filter),
+
+  getStatsByFournisseur: (filter: StatisticsFilter) =>
+    apiClient.post<EntityStat[]>('/Statistics/by-fournisseur', filter),
+
+  getStatsByClient: (filter: StatisticsFilter) =>
+    apiClient.post<EntityStat[]>('/Statistics/by-client', filter),
+
+  getStatsByProduit: (filter: StatisticsFilter) =>
+    apiClient.post<EntityStat[]>('/Statistics/by-produit', filter),
+
+  getStatsByMouvement: (filter: StatisticsFilter) =>
+    apiClient.post<MouvementStat[]>('/Statistics/by-mouvement', filter),
+
+  getStatsByPeriod: (filter: StatisticsFilter, periodType: string = 'jour') =>
+    apiClient.post<PeriodStat[]>(`/Statistics/by-period/${periodType}`, filter)
 }
 
 export default apiClient
