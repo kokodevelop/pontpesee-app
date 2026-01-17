@@ -44,7 +44,7 @@ const defaultColors = [
 const chartData = computed(() => ({
   labels: props.labels,
   datasets: props.datasets.map((ds, index) => {
-    const colorSet = defaultColors[index % defaultColors.length]
+    const colorSet = defaultColors[index % defaultColors.length]!
     return {
       label: ds.label,
       data: ds.data,

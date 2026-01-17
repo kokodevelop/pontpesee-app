@@ -501,7 +501,7 @@ const formatMonthLabel = (monthStr: string) => {
   const parts = monthStr.split('-')
   if (parts.length >= 2 && parts[0] && parts[1]) {
     const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
-    const monthIndex = parseInt(parts[1], 10) - 1
+    const monthIndex = parseInt(parts[1]!, 10) - 1
     return `${months[monthIndex]} ${parts[0]}`
   }
   return monthStr
