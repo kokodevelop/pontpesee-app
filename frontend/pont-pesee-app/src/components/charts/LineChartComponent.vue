@@ -43,14 +43,17 @@ const defaultColors = [
 
 const chartData = computed(() => ({
   labels: props.labels,
-  datasets: props.datasets.map((ds, index) => ({
-    label: ds.label,
-    data: ds.data,
-    borderColor: ds.borderColor || defaultColors[index % defaultColors.length].border,
-    backgroundColor: ds.backgroundColor || defaultColors[index % defaultColors.length].background,
-    fill: true,
-    tension: 0.3
-  }))
+  datasets: props.datasets.map((ds, index) => {
+    const colorSet = defaultColors[index % defaultColors.length]
+    return {
+      label: ds.label,
+      data: ds.data,
+      borderColor: ds.borderColor || colorSet.border,
+      backgroundColor: ds.backgroundColor || colorSet.background,
+      fill: true,
+      tension: 0.3
+    }
+  })
 }))
 
 const chartOptions = computed(() => ({
