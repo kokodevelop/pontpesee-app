@@ -63,9 +63,9 @@ namespace PontPesee.API.Services
             result.Summary = new StatisticsSummaryDto
             {
                 TotalPesees = data.Count,
-                TotalPoidsBrut = data.Sum(p => (double)p.Poids1),
-                TotalPoidsNet = data.Sum(p => (double)p.PoidsNet),
-                PoidsMoyen = data.Count > 0 ? data.Average(p => (double)p.PoidsNet) : 0,
+                TotalPoidsBrut = data.Sum(p => p.Poids1 ?? 0),
+                TotalPoidsNet = data.Sum(p => p.PoidsNet ?? 0),
+                PoidsMoyen = data.Count > 0 ? data.Average(p => p.PoidsNet ?? 0) : 0,
                 NombreFournisseurs = data.Select(p => p.IdFournisseur).Where(f => !string.IsNullOrEmpty(f)).Distinct().Count(),
                 NombreClients = data.Select(p => p.NomClient).Where(c => !string.IsNullOrEmpty(c)).Distinct().Count(),
                 NombreProduits = data.Select(p => p.Label).Where(l => !string.IsNullOrEmpty(l)).Distinct().Count(),
@@ -77,15 +77,15 @@ namespace PontPesee.API.Services
             // Par Fournisseur (Top N)
             result.ParFournisseur = data
                 .Where(p => !string.IsNullOrEmpty(p.IdFournisseur))
-                .GroupBy(p => new { p.CodeFournisseur, p.IdFournisseur })
+                .GroupBy(p => new { CodeFournisseur = p.CodeFournisseur ?? "", IdFournisseur = p.IdFournisseur ?? "" })
                 .Select(g => new EntityStatDto
                 {
-                    Code = g.Key.CodeFournisseur ?? "",
-                    Nom = g.Key.IdFournisseur ?? "",
+                    Code = g.Key.CodeFournisseur,
+                    Nom = g.Key.IdFournisseur,
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
@@ -94,15 +94,15 @@ namespace PontPesee.API.Services
             // Par Client (Top N)
             result.ParClient = data
                 .Where(p => !string.IsNullOrEmpty(p.NomClient))
-                .GroupBy(p => new { p.CodeClient, p.NomClient })
+                .GroupBy(p => new { CodeClient = p.CodeClient ?? "", NomClient = p.NomClient ?? "" })
                 .Select(g => new EntityStatDto
                 {
-                    Code = g.Key.CodeClient ?? "",
-                    Nom = g.Key.NomClient ?? "",
+                    Code = g.Key.CodeClient,
+                    Nom = g.Key.NomClient,
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
@@ -111,31 +111,31 @@ namespace PontPesee.API.Services
             // Par Produit (Top N)
             result.ParProduit = data
                 .Where(p => !string.IsNullOrEmpty(p.Label))
-                .GroupBy(p => p.Label)
+                .GroupBy(p => p.Label ?? "")
                 .Select(g => new EntityStatDto
                 {
-                    Code = g.Key ?? "",
-                    Nom = g.Key ?? "",
+                    Code = g.Key,
+                    Nom = g.Key,
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
                 .ToList();
 
             // Par Mouvement
-            var totalPoidsNet = data.Sum(p => (double)p.PoidsNet);
+            var totalPoidsNet = data.Sum(p => p.PoidsNet ?? 0);
             result.ParMouvement = data
                 .GroupBy(p => p.Mouvement ?? "Non defini")
                 .Select(g => new MouvementStatDto
                 {
                     Mouvement = g.Key,
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    Pourcentage = totalPoidsNet > 0 ? Math.Round(g.Sum(p => (double)p.PoidsNet) / totalPoidsNet * 100, 2) : 0
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    Pourcentage = totalPoidsNet > 0 ? Math.Round(g.Sum(p => p.PoidsNet ?? 0) / totalPoidsNet * 100, 2) : 0
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .ToList();
@@ -150,8 +150,8 @@ namespace PontPesee.API.Services
                     DateDebut = g.Key,
                     DateFin = g.Key.AddDays(1).AddSeconds(-1),
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0)
                 })
                 .OrderBy(s => s.DateDebut)
                 .TakeLast(30)
@@ -167,8 +167,8 @@ namespace PontPesee.API.Services
                     DateDebut = new DateTime(g.Key.Year, g.Key.Month, 1),
                     DateFin = new DateTime(g.Key.Year, g.Key.Month, 1).AddMonths(1).AddSeconds(-1),
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0)
                 })
                 .OrderBy(s => s.DateDebut)
                 .TakeLast(12)
@@ -190,9 +190,9 @@ namespace PontPesee.API.Services
                     Code = g.Key.CodeFournisseur ?? "",
                     Nom = g.Key.IdFournisseur ?? "",
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
@@ -212,9 +212,9 @@ namespace PontPesee.API.Services
                     Code = g.Key.CodeClient ?? "",
                     Nom = g.Key.NomClient ?? "",
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
@@ -234,9 +234,9 @@ namespace PontPesee.API.Services
                     Code = g.Key ?? "",
                     Nom = g.Key ?? "",
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    PoidsMoyen = g.Average(p => (double)p.PoidsNet)
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    PoidsMoyen = g.Average(p => p.PoidsNet ?? 0)
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .Take(filter.TopN)
@@ -248,7 +248,7 @@ namespace PontPesee.API.Services
             var query = GetBaseQuery(filter);
             var data = await query.ToListAsync();
 
-            var totalPoidsNet = data.Sum(p => (double)p.PoidsNet);
+            var totalPoidsNet = data.Sum(p => p.PoidsNet ?? 0);
 
             return data
                 .GroupBy(p => p.Mouvement ?? "Non defini")
@@ -256,9 +256,9 @@ namespace PontPesee.API.Services
                 {
                     Mouvement = g.Key,
                     NombrePesees = g.Count(),
-                    PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                    PoidsNetTotal = g.Sum(p => (double)p.PoidsNet),
-                    Pourcentage = totalPoidsNet > 0 ? Math.Round(g.Sum(p => (double)p.PoidsNet) / totalPoidsNet * 100, 2) : 0
+                    PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                    PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0),
+                    Pourcentage = totalPoidsNet > 0 ? Math.Round(g.Sum(p => p.PoidsNet ?? 0) / totalPoidsNet * 100, 2) : 0
                 })
                 .OrderByDescending(s => s.PoidsNetTotal)
                 .ToList();
@@ -279,8 +279,8 @@ namespace PontPesee.API.Services
                         DateDebut = new DateTime(g.Key.Year, g.Key.Month, 1),
                         DateFin = new DateTime(g.Key.Year, g.Key.Month, 1).AddMonths(1).AddSeconds(-1),
                         NombrePesees = g.Count(),
-                        PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                        PoidsNetTotal = g.Sum(p => (double)p.PoidsNet)
+                        PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                        PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0)
                     })
                     .OrderBy(s => s.DateDebut)
                     .ToList();
@@ -298,8 +298,8 @@ namespace PontPesee.API.Services
                         DateDebut = System.Globalization.ISOWeek.ToDateTime(g.Key.Year, g.Key.Week, DayOfWeek.Monday),
                         DateFin = System.Globalization.ISOWeek.ToDateTime(g.Key.Year, g.Key.Week, DayOfWeek.Sunday),
                         NombrePesees = g.Count(),
-                        PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                        PoidsNetTotal = g.Sum(p => (double)p.PoidsNet)
+                        PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                        PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0)
                     })
                     .OrderBy(s => s.DateDebut)
                     .ToList();
@@ -314,8 +314,8 @@ namespace PontPesee.API.Services
                         DateDebut = g.Key,
                         DateFin = g.Key.AddDays(1).AddSeconds(-1),
                         NombrePesees = g.Count(),
-                        PoidsBrutTotal = g.Sum(p => (double)p.Poids1),
-                        PoidsNetTotal = g.Sum(p => (double)p.PoidsNet)
+                        PoidsBrutTotal = g.Sum(p => p.Poids1 ?? 0),
+                        PoidsNetTotal = g.Sum(p => p.PoidsNet ?? 0)
                     })
                     .OrderBy(s => s.DateDebut)
                     .ToList();
