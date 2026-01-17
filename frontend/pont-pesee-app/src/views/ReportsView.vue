@@ -61,7 +61,7 @@
             </v-col>
 
             <!-- Boutons -->
-            <v-col cols="12" md="6" lg="4" class="d-flex align-center gap-2">
+            <v-col cols="12" md="6" lg="6" class="d-flex align-center gap-2">
               <v-btn
                 color="primary"
                 prepend-icon="mdi-chart-bar"
@@ -69,6 +69,16 @@
                 :loading="loading"
               >
                 Generer Rapports
+              </v-btn>
+
+              <v-btn
+                color="success"
+                prepend-icon="mdi-file-pdf-box"
+                @click="exportToPDF"
+                :loading="exportingPDF"
+                :disabled="!statistics || loading"
+              >
+                Exporter PDF
               </v-btn>
 
               <v-btn
@@ -353,8 +363,11 @@ import BarChartComponent from '@/components/charts/BarChartComponent.vue'
 import DoughnutChartComponent from '@/components/charts/DoughnutChartComponent.vue'
 import LineChartComponent from '@/components/charts/LineChartComponent.vue'
 import { statisticsAPI, type AdvancedStatistics, type StatisticsFilter } from '@/services/api'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 
 const loading = ref(false)
+const exportingPDF = ref(false)
 const statistics = ref<AdvancedStatistics | null>(null)
 
 const filters = ref<StatisticsFilter>({
@@ -505,6 +518,111 @@ const formatMonthLabel = (monthStr: string) => {
     return `${months[monthIndex]} ${parts[0]}`
   }
   return monthStr
+}
+
+const exportToPDF = async () => {
+  if (!statistics.value) return
+
+  exportingPDF.value = true
+  try {
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    let yPosition = 20
+
+    // Title
+    pdf.setFontSize(18)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Rapports Avances - Statistiques de Pesee', pageWidth / 2, yPosition, { align: 'center' })
+
+    yPosition += 10
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    const siteName = sites.find(s => s.value === filters.value.tableName)?.text || 'Tous les sites'
+    pdf.text(`Site: ${siteName}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Periode: ${filters.value.dateDebut || 'N/A'} - ${filters.value.dateFin || 'N/A'}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Date d'export: ${new Date().toLocaleDateString('fr-FR')}`, 15, yPosition)
+
+    yPosition += 10
+
+    // Summary statistics
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Resumé', 15, yPosition)
+    yPosition += 7
+
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    const summary = statistics.value.summary
+    pdf.text(`Total Pesees: ${formatNumber(summary.totalPesees)}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Poids Net Total: ${formatWeight(summary.totalPoidsNet)}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Poids Moyen: ${formatWeight(summary.poidsMoyen)}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Nombre de Fournisseurs: ${summary.nombreFournisseurs}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Nombre de Clients: ${summary.nombreClients}`, 15, yPosition)
+    yPosition += 5
+    pdf.text(`Nombre de Produits: ${summary.nombreProduits}`, 15, yPosition)
+
+    yPosition += 10
+
+    // Capture charts as images
+    const charts = document.querySelectorAll('.v-card')
+    let chartIndex = 0
+
+    for (const chart of Array.from(charts)) {
+      if (chartIndex >= 6) break // Limit to the 6 main charts
+
+      const cardTitle = chart.querySelector('.v-card-title')?.textContent?.trim()
+      if (!cardTitle || !cardTitle.includes('par') && !cardTitle.includes('Evolution')) continue
+
+      // Check if we need a new page
+      if (yPosition > pageHeight - 80) {
+        pdf.addPage()
+        yPosition = 20
+      }
+
+      try {
+        const canvas = await html2canvas(chart as HTMLElement, {
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+        const imgWidth = pageWidth - 30
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+        // Add chart title
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(cardTitle, 15, yPosition)
+        yPosition += 5
+
+        // Add chart image
+        pdf.addImage(imgData, 'PNG', 15, yPosition, imgWidth, Math.min(imgHeight, 80))
+        yPosition += Math.min(imgHeight, 80) + 10
+
+        chartIndex++
+      } catch (error) {
+        console.error('Error capturing chart:', error)
+      }
+    }
+
+    // Save PDF
+    const fileName = `rapport-avance-${filters.value.dateDebut || 'debut'}-${filters.value.dateFin || 'fin'}.pdf`
+    pdf.save(fileName)
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    alert('Erreur lors de la génération du PDF')
+  } finally {
+    exportingPDF.value = false
+  }
 }
 
 onMounted(() => {
