@@ -55,7 +55,21 @@ namespace PontPesee.API.Services
         public async Task<AdvancedStatisticsDto> GetAdvancedStatisticsAsync(StatisticsFilterDto filter)
         {
             var query = GetBaseQuery(filter);
-            var data = await query.ToListAsync();
+
+            // Select only the fields we need to avoid mapping errors
+            var data = await query.Select(p => new
+            {
+                p.Poids1,
+                p.PoidsNet,
+                p.Dmv,
+                IdFournisseur = p.IdFournisseur ?? "",
+                CodeFournisseur = p.CodeFournisseur ?? "",
+                NomClient = p.NomClient ?? "",
+                CodeClient = p.CodeClient ?? "",
+                Label = p.Label ?? "",
+                Mouvement = p.Mouvement ?? "",
+                Immatriculation = p.Immatriculation ?? ""
+            }).ToListAsync();
 
             var result = new AdvancedStatisticsDto();
 
@@ -66,10 +80,10 @@ namespace PontPesee.API.Services
                 TotalPoidsBrut = data.Sum(p => p.Poids1 ?? 0),
                 TotalPoidsNet = data.Sum(p => p.PoidsNet ?? 0),
                 PoidsMoyen = data.Count > 0 ? data.Average(p => p.PoidsNet ?? 0) : 0,
-                NombreFournisseurs = data.Select(p => p.IdFournisseur).Where(f => !string.IsNullOrEmpty(f)).Distinct().Count(),
-                NombreClients = data.Select(p => p.NomClient).Where(c => !string.IsNullOrEmpty(c)).Distinct().Count(),
-                NombreProduits = data.Select(p => p.Label).Where(l => !string.IsNullOrEmpty(l)).Distinct().Count(),
-                NombreVehicules = data.Select(p => p.Immatriculation).Where(i => !string.IsNullOrEmpty(i)).Distinct().Count(),
+                NombreFournisseurs = data.Where(p => !string.IsNullOrEmpty(p.IdFournisseur)).Select(p => p.IdFournisseur).Distinct().Count(),
+                NombreClients = data.Where(p => !string.IsNullOrEmpty(p.NomClient)).Select(p => p.NomClient).Distinct().Count(),
+                NombreProduits = data.Where(p => !string.IsNullOrEmpty(p.Label)).Select(p => p.Label).Distinct().Count(),
+                NombreVehicules = data.Where(p => !string.IsNullOrEmpty(p.Immatriculation)).Select(p => p.Immatriculation).Distinct().Count(),
                 PremierePesee = data.Count > 0 ? data.Min(p => p.Dmv) : null,
                 DernierePesee = data.Count > 0 ? data.Max(p => p.Dmv) : null
             };
@@ -77,7 +91,7 @@ namespace PontPesee.API.Services
             // Par Fournisseur (Top N)
             result.ParFournisseur = data
                 .Where(p => !string.IsNullOrEmpty(p.IdFournisseur))
-                .GroupBy(p => new { CodeFournisseur = p.CodeFournisseur ?? "", IdFournisseur = p.IdFournisseur ?? "" })
+                .GroupBy(p => new { p.CodeFournisseur, p.IdFournisseur })
                 .Select(g => new EntityStatDto
                 {
                     Code = g.Key.CodeFournisseur,
@@ -94,7 +108,7 @@ namespace PontPesee.API.Services
             // Par Client (Top N)
             result.ParClient = data
                 .Where(p => !string.IsNullOrEmpty(p.NomClient))
-                .GroupBy(p => new { CodeClient = p.CodeClient ?? "", NomClient = p.NomClient ?? "" })
+                .GroupBy(p => new { p.CodeClient, p.NomClient })
                 .Select(g => new EntityStatDto
                 {
                     Code = g.Key.CodeClient,
@@ -111,7 +125,7 @@ namespace PontPesee.API.Services
             // Par Produit (Top N)
             result.ParProduit = data
                 .Where(p => !string.IsNullOrEmpty(p.Label))
-                .GroupBy(p => p.Label ?? "")
+                .GroupBy(p => p.Label)
                 .Select(g => new EntityStatDto
                 {
                     Code = g.Key,
@@ -128,7 +142,7 @@ namespace PontPesee.API.Services
             // Par Mouvement
             var totalPoidsNet = data.Sum(p => p.PoidsNet ?? 0);
             result.ParMouvement = data
-                .GroupBy(p => p.Mouvement ?? "Non defini")
+                .GroupBy(p => p.Mouvement)
                 .Select(g => new MouvementStatDto
                 {
                     Mouvement = g.Key,
